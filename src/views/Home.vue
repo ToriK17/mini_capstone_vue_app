@@ -4,16 +4,17 @@
     <div>
       Title: <input type="text" v-model="newProductName"><br>
       Price: <input type="text" v-model="newProductPrice"><br>
-      Description: <input type="number" v-model="newProductDescription"><br>
-      Image URL: <input type="text" v-model="newProductImage">
+      Description: <input type="text" v-model="newProductDescription"><br>
+      Image URL: <input type="text" v-model="newProductImageUrl">
     </div>
     <button v-on:click="createProduct()">Add a Product</button>
 
-    <h1>{{ message }}</h1>
+    <h1> {{message}} </h1>
 
     <div v-for="product in products">
-      <h2>Name: {{product.name}}</h2>
-      <img v-bind:src="product.image_url" v-bind:alt="recipe.title">
+
+      <h2>Name: {{ product.name }}</h2>
+      <img v-bind:src="product.image_url" v-bind:alt="product.title">
       <div>
         <button v-on:click="showProduct(product)"> More Info</button>
       </div>
@@ -21,10 +22,20 @@
         <p>Title: {{ product.title }}</p>
         <p>Price: {{ product.price }}</p>
         <p>Description: {{ product.description }}</p>
+        <h4>Edit Product</h4> 
+        <div>
+        Title: <input type="text" v-model="product.title"><br>
+        Price: <input type="text" v-model="product.price"><br>
+        Description: <input type="text" v-model="product.description"><br>
+        Image URL: <input type="text" v-model="product.image_url">
+      </div>
+      <button v-on:click="updateProduct(product)"> Update </button><br>
+      <button v-on:click="destroyProduct(product)"> Destroy </button>
       </div>
     </div>  
 
   </div>
+
 </template>
 
 <style>
@@ -35,10 +46,11 @@
 
 <script>
 import axios from "axios";  
+
 export default {
   data: function() {
     return {
-      message: "All Products",
+      message: "All the Products",
       products: [], 
       newProductName: "", 
       newProductPrice: "", 
@@ -59,13 +71,17 @@ export default {
         name: this.newProductName, 
         price: this.newProductPrice,
         description: this.newProductDescription,
-        image_url: this.newProductImage
+        image_url: this.newProductImageUrl
       };
 
-      axios.post("api/products", params)
+      axios.post("/api/products", params)
         .then(response => {
           console.log("Success", response.data);
           this.products.push(response.data);
+          this.newProductName = "";
+          this.newProductPrice = "";
+          this.newProductDescription = "";
+          this.newProductImageUrl = "";
         })
         .catch(error => {
           console.log(error.response.data.errors);
@@ -77,6 +93,29 @@ export default {
       } else {
         this.currentProduct = product;
       }
+    },
+    updateProduct: function(product) {
+      var params = {
+        name: product.name, 
+        price: product.price,
+        description: product.description,
+        image_url: product.imageUrl
+      };
+      axios.patch("/api/products/" + product.id, params)
+        .then(response => {
+          console.log("Success", response.data);
+        })
+        .catch(error => {
+          console.log(error.response.data.errors);
+        });
+    },
+    destroyProduct: function(product) {
+      axios.delete("/api/products" + product.id)
+        .then(response => {
+          console.log("Success", response.data);
+          var index = this.products.indexOf(product);
+          this.products.splice(index, 1);
+        });
     }
   }
 };
