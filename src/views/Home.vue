@@ -9,15 +9,30 @@
     </div>
     <button v-on:click="createProduct()">Add a Product</button>
 
-    <h1> {{message}} </h1>
+    
 
-    <div v-for="product in products">
+    <button v-on:click="setSortAttribute('price')">Sort By Price
+      <i v-if="sortAttribute === 'price' && sortAscending === 1" class="icon-arrow-up"></i>
+    </button>
+    <button v-on:click="setSortAttribute('name')">Sort By Name</button>
 
-      <h2>Name: {{ product.name }}</h2>
-      <img v-bind:src="product.image_url" v-bind:alt="product.title">
+    <div>
+      <br>
+      Search:
+      <input type="text" v-model="searchBar" list="names">
+    </div>
+    <datalist id="names">
+      <option v-for="product in products">{{ product.name}}</option>  
+    </datalist> 
+      <div v-for="product in orderBy(filterBy(products, searchBar),sortAttribute, sortAscending)">
+            
+        <h2>Name: {{ product.name }}</h2>
+        <img v-bind:src="product.image_url" v-bind:alt="product.title">
       <div>
         <button v-on:click="showProduct(product)"> More Info</button>
       </div>
+      
+    
       <div v-if="product === currentProduct">
         <p>Title: {{ product.title }}</p>
         <p>Price: {{ product.price }}</p>
@@ -33,21 +48,26 @@
       <button v-on:click="destroyProduct(product)"> Destroy </button>
       </div>
     </div>  
-
   </div>
 
 </template>
 
 <style>
+  
+
   img {
     width: 150px;
   };
 </style>
 
+
+
 <script>
-import axios from "axios";  
+import axios from "axios";
+import Vue2Filters from "vue2-filters";  
 
 export default {
+  mixins: [Vue2Filters.mixin],
   data: function() {
     return {
       message: "All the Products",
@@ -56,7 +76,10 @@ export default {
       newProductPrice: "", 
       newProductDescription: "", 
       newProductImage: "", 
-      currentProduct: {}
+      currentProduct: {}, 
+      searchBar: "", 
+      sortAttribute: "", 
+      sortAscending: 1
     };
   },
   created: function() {
@@ -66,6 +89,16 @@ export default {
     });  
   },
   methods: {
+    setSortAttribute: function(attribute) {
+      if (this.sortAttribute === attribute) {
+        this.sortAscending = this.sortAscending * -1;
+      } else {
+        this.sortAscending = 1;
+        this.sortAttribute = attribute;
+      }
+
+    },
+
     createProduct: function() {
       var params = {
         name: this.newProductName, 
